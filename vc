@@ -1,29 +1,233 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import Registration from './Registration';
-import Login from './Login';
-import Dashboard from './Dashboard';
+// App.js
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate, Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+function Register() {
+  const [formData, setFormData] = useState({
+    name: '',
+    dob: '',
+    email: '',
+    password: ''
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('/register', formData);
+      alert('Registration successful');
+      // Optionally, redirect to login after registration
+      // navigate('/login');
+    } catch (error) {
+      alert('Error registering');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={formStyle}>
+      <h2>Register</h2>
+      <input
+        type="text"
+        name="name"
+        placeholder="Name"
+        value={formData.name}
+        onChange={handleChange}
+        style={inputStyle}
+        required
+      />
+      <input
+        type="date"
+        name="dob"
+        placeholder="Date of Birth"
+        value={formData.dob}
+        onChange={handleChange}
+        style={inputStyle}
+        required
+      />
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={handleChange}
+        style={inputStyle}
+        required
+      />
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        value={formData.password}
+        onChange={handleChange}
+        style={inputStyle}
+        required
+      />
+      <button type="submit" style={buttonStyle}>Register</button>
+    </form>
+  );
+}
+
+function Login() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('/login', formData);
+      localStorage.setItem('token', response.data.token);
+      alert('Login successful');
+      // Optionally, redirect to dashboard after login
+      // navigate('/dashboard');
+    } catch (error) {
+      alert('Error logging in');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={formStyle}>
+      <h2>Login</h2>
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={handleChange}
+        style={inputStyle}
+        required
+      />
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        value={formData.password}
+        onChange={handleChange}
+        style={inputStyle}
+        required
+      />
+      <button type="submit" style={buttonStyle}>Login</button>
+    </form>
+  );
+}
+
+function Dashboard() {
+  const [userData, setUserData] = useState(null);
+
+  // Fetch user data or any other initialization logic
+  // useEffect(() => {
+  //   async function fetchUserData() {
+  //     try {
+  //       const response = await axios.get('/user', {
+  //         headers: {
+  //           Authorization: Bearer ${localStorage.getItem('token')}
+  //         }
+  //       });
+  //       setUserData(response.data);
+  //     } catch (error) {
+  //       console.error('Error fetching user data:', error);
+  //     }
+  //   }
+  //   fetchUserData();
+  // }, []);
+
+  // Sample static table data
+  const tableData = [
+    { id: 1, name: 'John Doe', email: 'john.doe@example.com', dob: '1990-01-01' },
+    { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', dob: '1995-05-15' },
+    { id: 3, name: 'Michael Brown', email: 'michael.brown@example.com', dob: '1985-09-30' }
+  ];
+
+  return (
+    <div>
+      <h2>Welcome to Dashboard</h2>
+      <table style={tableStyle}>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Date of Birth</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tableData.map((row) => (
+            <tr key={row.id}>
+              <td>{row.id}</td>
+              <td>{row.name}</td>
+              <td>{row.email}</td>
+              <td>{row.dob}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const formStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  maxWidth: '300px',
+  margin: '0 auto',
+};
+
+const inputStyle = {
+  margin: '10px 0',
+  padding: '10px',
+  fontSize: '16px',
+};
+
+const buttonStyle = {
+  padding: '10px',
+  fontSize: '16px',
+  backgroundColor: '#4CAF50',
+  color: 'white',
+  border: 'none',
+  cursor: 'pointer',
+};
+
+const tableStyle = {
+  borderCollapse: 'collapse',
+  width: '100%',
+  marginTop: '20px',
+};
 
 function App() {
   return (
     <Router>
+      <div style={{ textAlign: 'center', paddingTop: '20px' }}>
+        <Link to="/register" style={{ margin: '0 10px', textDecoration: 'none' }}>Register</Link>
+        <Link to="/login" style={{ margin: '0 10px', textDecoration: 'none' }}>Login</Link>
+      </div>
       <Routes>
-        <Route path="/register" element={<Registration />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<ProtectedRoute component={Dashboard} />} />
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route
+          path="/dashboard"
+          element={
+            localStorage.getItem('token') ? (
+              <Dashboard />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
       </Routes>
     </Router>
   );
 }
 
-function ProtectedRoute({ component: Component }) {
-  const isAuthenticated = localStorage.getItem('token');
-  return isAuthenticated ? <Component /> : <Navigate to="/login" />;
-}
-
-
-<!---
+export default App;
 Asawari21/Asawari21 is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 You can click the Preview link to take a look at your changes.
 --->
